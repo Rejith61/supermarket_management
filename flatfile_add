@@ -1,0 +1,117 @@
+  FFLATPF    IF   E             DISK    RENAME(FLATPF:FLATREC) PREFIX(F_) 
+                                                                         
+  // Variables for string parsing                                        
+ D RawString       S            150A                                     
+ D StartPos        S              5I 0                                   
+ D CommaPos        S              5I 0                                   
+ D FieldCount      S              3I 0                                   
+ D Extracted       S             50A                                     
+                                                                         
+  // Temporary variables to hold the extracted data                      
+ D w_ID            S              5A                                     
+ D w_Name          S             20A                                     
+ D w_Brand         S             20A                                     
+ D w_Cat           S             10A                                     
+ D w_Rate          S              7S 2                                   
+ D w_Date          S               D   DATFMT(*ISO)                      
+D w_Qty           S              5S 0                     
+                                                           
+ D w_Count         S              5I 0                     
+                                                           
+        exec sql SET OPTION COMMIT = *NONE;                
+                                                           
+   // 1. Loop through the flat file                        
+   read FLATPF;                                            
+   dow not %eof(FLATPF);                                   
+                                                           
+       RawString = %trim(F_FLATPF);                        
+       if RawString <> *blanks;                            
+           exsr ParseCsvLine;                              
+           exsr SaveToDatabase;                            
+       endif;                                              
+                                                           
+       read FLATPF;                                        
+   enddo;                                                               
+                                                                        
+   *inlr = *on;                                                         
+                                                                        
+   // ==========================================================        
+   // SUBROUTINE: Parse the comma-separated string                      
+   // ==========================================================        
+                                                                        
+   begsr ParseCsvLine;                                                  
+       StartPos = 1;                                                    
+       FieldCount = 1;                                                  
+                                                                        
+       dow StartPos <= %len(RawString);                                 
+           CommaPos = %scan(',': RawString: StartPos);                  
+           if CommaPos = 0;                                             
+               Extracted = %trim(%subst(RawString: StartPos));          
+               StartPos = %len(RawString) + 1;                          
+         else;                                                         
+    Extracted = %trim(%subst(RawString: StartPos:CommaPos - StartPos)) 
+                                                                       
+             StartPos = CommaPos + 1;                                  
+         endif;                                                        
+                                                                       
+         select;                                                       
+             when FieldCount = 1;                                      
+              w_ID = Extracted;                                        
+             when FieldCount = 2;                                      
+              w_Name = Extracted;                                      
+             when FieldCount = 3;                                      
+              w_Brand = Extracted;                                     
+             when FieldCount = 4;                                      
+              w_Cat = Extracted;                                       
+             when FieldCount = 5;                                      
+              w_Rate = %dec(Extracted: 7: 2);                          
+             when FieldCount = 6;                               
+              w_Date = %date(Extracted:*ISO);                   
+             when FieldCount = 7;                               
+              w_Qty = %dec(Extracted: 5: 0);                    
+         endsl;                                                 
+                                                                
+         FieldCount += 1;                                       
+     enddo;                                                     
+ endsr;                                                         
+                                                                
+ // ==========================================================  
+ // SUBROUTINE: Save or Update to ITEMMST Table                 
+ // ==========================================================  
+                                                                
+ begsr SaveToDatabase;                                          
+                                                                
+     // Check if the product already exists in ITEMMST table    
+     exec sql                                                    
+         SELECT COUNT(*) INTO :w_Count                           
+         FROM ITEMMST                                            
+         WHERE PPRODID = :w_ID;                                  
+                                                                 
+     if w_Count > 0;                                             
+         // If it exists, Update it                              
+          exec sql                                               
+              UPDATE ITEMMST                                     
+              SET PQTY = PQTY + :w_Qty,                          
+                  PPRODRATE = :w_Rate,                           
+                  PMFGDATE = :w_Date                             
+              WHERE PPRODID = :w_ID;                             
+                                                                 
+        // If product ID not in ITEMMST table                    
+      else;                                                      
+       //checking product ID in INVMST table                     
+          exec sql                                                
+              SELECT COUNT(*) INTO :w_Count                       
+              FROM INVMST                                         
+              WHERE IPRODID = :w_ID;                              
+                                                                  
+        // If it exists, Insert it                                
+     if w_Count > 0;                                              
+          exec sql                                                
+              INSERT INTO ITEMMST                                 
+              (PPRODID, PPRODNAME, PBRAND, PCATTYPE, PPRODRATE,   
+                                             PMFGDATE, PQTY)      
+              VALUES (:w_ID, :w_Name, :w_Brand, :w_Cat, :w_Rate,  
+                                             :w_Date, :w_Qty);    
+      endif;                                                      
+    endif;                                                        
+  endsr;                                                          
