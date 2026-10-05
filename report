@@ -1,0 +1,111 @@
+FITEMRPT   O    E             PRINTER USROPN                      
+ FSMMSDSPF  CF   E             WORKSTN SFILE(CATSFL:RRN3)          
+                                                                   
+ D RRN3            S              4  0                             
+                                                                   
+ D w_ID            S              5A                               
+ D w_Name          S             20A                               
+ D w_Brand         S             20A                               
+ D w_Cat           S             10A                               
+ D w_Rate          S              7S 2                             
+ D w_Date          S               D   DATFMT(*ISO)                
+ D w_Qty           S              5S 0                             
+ D w_PrevCat       S             10A   INZ(*BLANKS)                
+ D p_Status        S              1A                               
+                                                                   
+ C     *ENTRY        PLIST                                         
+C                   PARM                    p_Status                   
+                                                                       
+  exec sql SET OPTION COMMIT = *NONE;                                  
+                                                                       
+    // 1. Clear the Category Window Subfile                            
+      *in72 = *on;                                                     
+      write CATCTL;                                                    
+      *in72 = *off;                                                    
+      RRN3 = 0;                                                        
+                                                                       
+    // 2. Fetch distinct categories dynamically from ITEMMST           
+    exec sql DECLARE C_CAT CURSOR FOR SELECT DISTINCT PCATTYPE FROM    
+                                         ITEMMST;                      
+    exec sql OPEN C_CAT;                                               
+                                                                       
+    dow 1=1;                                                           
+        exec sql FETCH C_CAT INTO :W2CAT;                              
+       if sqlcode <> 0;                                        
+          leave;                                               
+       endif;                                                  
+                                                               
+       W2OPT = *blanks;                                        
+       RRN3 += 1;                                              
+       write CATSFL;                                           
+  enddo;                                                       
+  exec sql CLOSE C_CAT;                                        
+                                                               
+  // 3. Append the 'All' option manually at the bottom         
+    W2OPT = *blanks;                                           
+    W2CAT = 'All';                                             
+    RRN3 += 1;                                                 
+    write CATSFL;                                              
+                                                               
+    *in74 = *on;                                               
+                                                                         
+    // 4. Display Window to User                                         
+      exfmt CATCTL;                                                      
+      if *in12 = *on;                                                    
+        p_Status = 'C';                                                  
+        *in12 = *off;                                                    
+        *inlr = *on;                                                     
+        return;    // Instantly exit without opening the printer file    
+      endif;                                                             
+                                                                         
+    // 5. Read Selection (Default to 'All' if they just press Enter or e 
+      readc CATSFL;                                                      
+      if %eof or W2OPT <> 'Y';                                           
+          W2CAT = 'All';                                                 
+      endif;                                                             
+                                                                         
+   // 6. Open the Printer File ONLY because we know we are actually prin
+      if not %open(ITEMRPT);                                         
+        open ITEMRPT;                                                
+      endif;                                                         
+                                                                     
+   // 7. Declare Dynamic Report Cursor based on user selection       
+     exec sql DECLARE C_RPT CURSOR FOR                               
+              SELECT PPRODID, PPRODNAME, PBRAND, PCATTYPE,           
+                     PPRODRATE, PMFGDATE, PQTY                       
+              FROM ITEMMST                                           
+              WHERE PCATTYPE = :W2CAT OR :W2CAT = 'All'              
+              ORDER BY PCATTYPE, PPRODID;                            
+                                                                     
+   exec sql OPEN C_RPT;                                              
+                                                                     
+   write RHEADER;                                                    
+                                                                     
+   dow 1 = 1;                                                        
+     exec sql FETCH C_RPT INTO :w_ID, :w_Name, :w_Brand,              
+                               :w_Cat, :w_Rate, :w_Date, :w_Qty;      
+                                                                      
+     if sqlcode <> 0;                                                 
+         leave;                                                       
+     endif;                                                           
+                                                                      
+     if w_PrevCat <> *blanks and w_PrevCat <> w_Cat;                  
+         write RSPACE;                                                
+     endif;                                                           
+                                                                      
+     w_PrevCat = w_Cat;                                               
+                                                                      
+  //assigning to printer file variables                               
+     PPRODID = w_ID;                                                  
+     PPRODNAME = w_Name;                                              
+     PBRAND = w_Brand;                                                
+      PCATTYPE = w_Cat;                    
+      PPRODRATE = w_Rate;                  
+      PMFGDATE = w_Date;                   
+      PQTY = w_Qty;                        
+                                           
+      write RDETAIL;                       
+  enddo;                                   
+                                           
+  exec sql CLOSE C_RPT;                    
+  *inlr = *on;                             
