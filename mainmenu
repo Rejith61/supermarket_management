@@ -1,0 +1,124 @@
+FSMMSDSPF  CF   E             WORKSTN                            
+                                                                 
+D PgmSDS         SDS                                             
+D PGMNAM                  1     10A                              
+                                                                                                                                  
+D ExecuteCmd      PR                  ExtPgm('QCMDEXC')          
+D  CmdString                   300A   options(*varsize) const    
+D  CmdLength                    15P 5 const                      
+                                                                 
+D w_Cmd           S            100A                              
+D w_Status        S              1A   INZ(*BLANKS)               
+D p_EmpID         S             10A                              
+                                                                 
+C     *ENTRY        PLIST                                   
+ C                   PARM                    p_EmpID         
+                                                             
+     dow *in03 = *off;                                       
+                                                             
+         DSPUSER = p_EmpID;                                  
+                                                             
+         exfmt MAINMENU;        //Main Screen                
+         ERRMSG = ' ';                                       
+         *in50 = *off;         //Error Message Indicator     
+         *in51 = *off;         //Success Message Indicator   
+                                                             
+         select;                                             
+             when *in03 = *on;                               
+                 leave;                                      
+                                                             
+            //Inventory Registration Screen                  
+             when MOPTION = '1';                                         
+ C                   CALL      'SMMINVREG'                               
+ C                   PARM                    p_EmpID                     
+                                                                         
+            //Manual Product Registration Screen                         
+             when MOPTION = '2';                                         
+ C                   CALL      'SMMITMMAN'                               
+ C                   PARM                    p_EmpID                     
+                                                                         
+            //Bulk upload using flat file                                
+             when MOPTION = '3';                                         
+                     EXFMT     CONFIRMWDO;                               
+                  if CONFIRM = 'Y' or CONFIRM = 'y';                     
+ C                   CALL      'SMMFLAT'                                 
+                     *in51 = *on;                                        
+                     ERRMSG = 'Flat File Data Uploaded Successfully.';   
+                  elseif CONFIRM = 'N' or CONFIRM = 'n';                 
+                     *in50 = *on;                                       
+                      ERRMSG = 'Upload Cancelled.';                     
+                 else;                                                  
+                   *in50 = *on;                                         
+                    ERRMSG = 'Choose Valid Option';                     
+                endif;                                                  
+                                                                        
+              CONFIRM = *blanks;                                        
+                                                                        
+            //Purchase and Billing Screen                               
+            when MOPTION = '4';                                         
+C                   CALL      'SMMPURCH'                                
+C                   PARM                    p_EmpID                     
+                                                                        
+            //Stock Report Generation                                   
+            when MOPTION = '5';                                         
+                    EXFMT     CONFIRMWDO;                               
+                if CONFIRM = 'Y' or CONFIRM = 'y';                  
+                    w_Status = *blanks;                             
+C                   CALL      'SMMRPT'                              
+C                   PARM                    w_Status                
+                                                                    
+        if w_Status = 'C';                                          
+               *in50 = *on;                                         
+               ERRMSG = 'Report Cancelled by User.';                
+                                                                    
+        else;                                                       
+         w_Cmd = 'DSPSPLF FILE(ITEMRPT) SPLNBR(*LAST)';             
+                                                                    
+         monitor;                                                   
+              ExecuteCmd(%trim(w_Cmd) : %len(%trim(w_Cmd)));        
+               *in51 = *on;                                         
+            ERRMSG = 'Stock Report generated to Spool File.';       
+                if CONFIRM = 'Y' or CONFIRM = 'y';                  
+                    w_Status = *blanks;                             
+C                   CALL      'SMMRPT'                              
+C                   PARM                    w_Status                
+                                                                    
+        if w_Status = 'C';                                          
+               *in50 = *on;                                         
+               ERRMSG = 'Report Cancelled by User.';                
+                                                                    
+        else;                                                       
+         w_Cmd = 'DSPSPLF FILE(ITEMRPT) SPLNBR(*LAST)';             
+                                                                    
+         monitor;                                                   
+              ExecuteCmd(%trim(w_Cmd) : %len(%trim(w_Cmd)));        
+               *in51 = *on;                                         
+            ERRMSG = 'Stock Report generated to Spool File.';       
+         on-error;                                               
+               *in50 = *on;                                      
+            ERRMSG = 'Error: Spool file could not be found.';    
+                                                                 
+         endmon;                                                 
+    endif;                                                       
+        elseif CONFIRM = 'N' or CONFIRM = 'n';                   
+                 *in50 = *on;                                    
+                  ERRMSG = 'Report Cancelled.';                  
+        else;                                                    
+             *in50 = *on;                                        
+             ERRMSG = 'Choose Valid Option.';                    
+   endif;                                                        
+                                                                 
+          CONFIRM = *blanks;                                     
+                                                                 
+            other;                                               
+                    *in50 = *on;                                       
+             ERRMSG = 'Invalid Selection.Please choose valid option';  
+                                                                       
+            endsl;                                                     
+                                                                       
+          MOPTION = ' ';                                               
+                                                                       
+          enddo;                                                       
+                                                                       
+          *inlr = *on;                                                 
+                                                                       
