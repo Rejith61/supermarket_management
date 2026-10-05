@@ -1,0 +1,446 @@
+     A*%%TS  SD  20260603  073153  CTSC67      REL-V7R4M0  5770-WDS   
+     A*%%EC                                                           
+     A                                      PRINT                     
+     A                                      DSPSIZ(24 80 *DS3)        
+     A          R LOGINREC                                            
+     A*%%TS  SD  20260602  125734  CTSC67      REL-V7R4M0  5770-WDS   
+     A                                      CA03(03 'EXIT')           
+     A                                      CF06(06 'REGISTER')       
+     A            PGMNAM        10A  O  1  7COLOR(BLU)                
+     A                                      DSPATR(HI)                
+     A                                  6  5'       NEW USER SIGN UP  
+     A                                      COLOR(WHT)                
+     A                                      DSPATR(HI)                
+     A                                 10  7'EMPLOYEE ID :'           
+     A                                      DSPATR(HI)                
+     A            N_EMPID       10A  B 10 21CHECK(LC)                 
+     A                                 12  7'PASSWORD    :'            
+     A                                      DSPATR(HI)                 
+     A            N_PASS        10A  B 12 21DSPATR(ND)                 
+     A                                      CHECK(LC)                  
+     A                                      DSPATR(UL)                 
+     A                                 14  7'PRESS F6 TO SAVE/UPDATE'  
+     A                                      COLOR(BLU)                 
+     A                                  6 45'     EXISTING USER LOGIN  
+     A                                      COLOR(WHT)                 
+     A                                      DSPATR(HI)                 
+     A                                 10 47'EMPLOYEE ID :'            
+     A                                      DSPATR(HI)                 
+     A            E_EMPID       10A  B 10 61CHECK(LC)                  
+     A                                 12 47'PASSWORD    :'            
+     A                                      DSPATR(HI)                 
+     A            E_PASS        10A  B 12 61DSPATR(ND)                 
+     A                                      DSPATR(UL)                 
+     A                                      CHECK(LC)                 
+     A                                 14 47'PRESS ENTER TO LOGIN'    
+     A                                      COLOR(BLU)                
+     A                                 22  4'F3=EXIT'                 
+     A                                      COLOR(BLU)                
+     A            ERRMSG        60A  O 20 10DSPATR(HI)                
+     A  50                                  COLOR(RED)                
+     A  51                                  COLOR(WHT)                
+     A                                  4 40'|'                       
+     A                                      DSPATR(HI)                
+     A                                  5 40'|'                       
+     A                                      DSPATR(HI)                
+     A                                  6 40'|'                       
+     A                                      DSPATR(HI)                
+     A                                  7 40'|'                       
+     A                                      DSPATR(HI)                
+     A                                  8 40'|'                       
+    A                                      DSPATR(HI)            
+    A                                  9 40'|'                   
+    A                                      DSPATR(HI)            
+    A                                 10 40'|'                   
+    A                                      DSPATR(HI)            
+    A                                 11 40'|'                   
+    A                                      DSPATR(HI)            
+    A                                 13 40'|'                   
+    A                                      DSPATR(HI)            
+    A                                 14 40'|'                   
+    A                                      DSPATR(HI)            
+    A                                 15 40'|'                   
+    A                                      DSPATR(HI)            
+    A                                 16 40'|'                   
+    A                                      DSPATR(HI)            
+    A                                 17 40'|'                   
+    A                                      DSPATR(HI)            
+     A                                 18 40'|'                     
+     A                                      DSPATR(HI)              
+     A                                  1 72DATE                    
+     A                                      EDTCDE(Y)               
+     A                                      COLOR(BLU)              
+     A                                  2 72TIME                    
+     A                                      COLOR(BLU)              
+     A                                  2 30'Employee Registration' 
+     A                                      DSPATR(HI)              
+     A                                 12 40'|'                     
+     A                                      DSPATR(HI)              
+     A                                  1 66'DATE:'                 
+     A                                      DSPATR(HI)              
+     A                                  2 66'TIME:'                 
+     A                                      DSPATR(HI)              
+     A                                  1  2'PGM:'                  
+     A                                      DSPATR(HI)              
+      A          R MAINMENU                                              
+      A*%%TS  SD  20260602  065051  CTSC67      REL-V7R4M0  5770-WDS     
+      A                                      CA03(03 'F3=EXIT')          
+      A            PGMNAM        10A  O  1  8COLOR(BLU)                  
+      A                                      DSPATR(HI)                  
+      A                                  1 26'Super Market Management Sy 
+      A                                      DSPATR(HI)                  
+      A                                  1 71DATE                        
+      A                                      EDTCDE(Y)                   
+      A                                      COLOR(BLU)                  
+      A                                  2 71TIME                        
+      A                                      COLOR(BLU)                  
+      A            DSPUSER       10A  O  2  8COLOR(BLU)                  
+      A                                  6 20'1. Inventory Registration' 
+      A                                  8 20'2. Item Addition via Manua 
+      A                                 10 20'3. Item Addition bulk uplo 
+      A                                      lat File'                   
+     A                                 12 20'4. Billing'            
+     A                                 14 20'5. Stock Report'       
+     A                                 17 20'Enter Option:'         
+     A                                      DSPATR(HI)              
+     A            MOPTION        1A  B 17 35                        
+     A                                 21  7'F3=EXIT'               
+     A                                      COLOR(BLU)              
+     A            ERRMSG        50A  O 23  8                        
+     A  50                                  COLOR(RED)              
+     A  51                                  COLOR(WHT)              
+     A                                  1  2'PGM:'                  
+     A                                      DSPATR(HI)              
+     A                                  2  2'USER:'                 
+     A                                      DSPATR(HI)              
+     A                                  1 65'DATE:'                 
+     A                                      DSPATR(HI)              
+     A                                  2 65'TIME:'                 
+     A                                      DSPATR(HI)                 
+     A          R INVREG                                               
+     A*%%TS  SD  20260602  065051  CTSC67      REL-V7R4M0  5770-WDS    
+     A                                      CA03(03 'F3=EXIT')         
+     A                                      CF04(04 'F4=SAVE')         
+     A            PGMNAM        10A  O  1  8COLOR(BLU)                 
+     A                                      DSPATR(HI)                 
+     A                                  1 30'Inventory Registration'   
+     A                                      DSPATR(HI)                 
+     A                                  1 72DATE                       
+     A                                      EDTCDE(Y)                  
+     A                                      COLOR(BLU)                 
+     A                                  2 72TIME                       
+     A                                      COLOR(BLU)                 
+     A            DSPUSER       10A  O  2  8COLOR(BLU)                 
+     A                                  6 20'Product Id.........:'     
+     A                                  8 20'Manufacturer Name..:'     
+     A                                 10 20'Registration No....:'      
+     A                                 22  6'F3=EXIT'                   
+     A                                      COLOR(BLU)                  
+     A                                 22 20'F4=SAVE'                   
+     A                                      COLOR(BLU)                  
+     A            MIREGNO   R        B 10 41REFFLD(INVMSTR/IREGNO CTSC6 
+     A                                      MST)                        
+     A  63                                  DSPATR(RI)                  
+     A  63                                  DSPATR(PC)                  
+     A                                      CHECK(LC)                   
+     A            MIMFGNAME R        B  8 41REFFLD(INVMSTR/IMFGNAME CTS 
+     A                                      NVMST)                      
+     A  62                                  DSPATR(RI)                  
+     A  62                                  DSPATR(PC)                  
+     A                                      CHECK(LC)                   
+     A            MIPRODID  R        O  6 41REFFLD(INVMSTR/IPRODID CTSC 
+     A                                      VMST)                       
+     A            ERRMSG        50A  O 19  7                          
+     A  50                                  COLOR(RED)                
+     A  51                                  COLOR(WHT)                
+     A                                  1  2'PGM:'                    
+     A                                      DSPATR(HI)                
+     A                                  2  2'USER:'                   
+     A                                      DSPATR(HI)                
+     A                                  1 66'DATE:'                   
+     A                                      DSPATR(HI)                
+     A                                  2 66'TIME:'                   
+     A                                      DSPATR(HI)                
+     A          R ITEMMAN                                             
+     A*%%TS  SD  20260602  113205  CTSC67      REL-V7R4M0  5770-WDS   
+     A                                      CA03(03 'F3=EXIT')        
+     A                                      CF04(04 'F4=SAVE')        
+     A                                      CF05(05 'F5=PROMPT')      
+     A            PGMNAM        10A  O  1  8COLOR(BLU)                
+     A                                      DSPATR(HI)                  
+     A                                  1 29'Item Addition via manual'  
+     A                                      DSPATR(HI)                  
+     A                                  1 72DATE                        
+     A                                      EDTCDE(Y)                   
+     A                                      COLOR(BLU)                  
+     A                                  2 72TIME                        
+     A                                      COLOR(BLU)                  
+     A            DSPUSER       10A  O  2  8COLOR(BLU)                  
+     A                                  5 20'Product Id...:'            
+     A                                  6 20'Product Name.:'            
+     A                                  7 20'Brand Name...:'            
+     A                                  8 20'Category Type:'            
+     A                                  9 20'Product Rate.:'            
+     A                                 10 20'MFG Date.....:'            
+     A                                 11 20'Quantity.....:'            
+     A            PQTY      R        B 11 35REFFLD(ITEMMSTR/PQTY CTSC67
+     A                                      MST)                        
+     A  65                                  DSPATR(RI)                  
+     A  65                                  DSPATR(PC)                  
+     A            PMFGDATE  R        B 10 35REFFLD(ITEMMSTR/PMFGDATE CT 
+     A                                      ITEMMST)                    
+     A                                      DATFMT(*ISO)                
+     A                                      TEXT('MFG DATE')            
+     A  82                                  DSPATR(RI PC)               
+     A            PPRODRATE R        B  9 35REFFLD(ITEMMSTR/PPRODRATE C 
+     A                                      /ITEMMST)                   
+     A  64                                  DSPATR(RI)                  
+     A  64                                  DSPATR(PC)                  
+     A                                      EDTCDE(4)                   
+     A            PCATTYPE  R        B  8 35REFFLD(ITEMMSTR/PCATTYPE CT 
+     A                                      ITEMMST)                    
+     A  45                                  DSPATR(PR)                  
+     A  63                                  DSPATR(RI)                  
+     A  63                                  DSPATR(PC)                  
+     A                                      CHECK(LC)                   
+     A            PBRAND    R        B  7 35REFFLD(ITEMMSTR/PBRAND CTSC 
+     A                                      EMMST)                      
+     A  45                                  DSPATR(PR)                  
+     A  62                                  DSPATR(RI)                  
+     A  62                                  DSPATR(PC)                  
+     A                                      CHECK(LC)                   
+     A            PPRODNAME R        B  6 35REFFLD(ITEMMSTR/PPRODNAME C 
+     A                                      /ITEMMST)                   
+     A  40                                  DSPATR(PR)                  
+     A  61                                  DSPATR(RI)                  
+     A  61                                  DSPATR(PC)                  
+     A                                      CHECK(LC)                   
+     A            PPRODID   R        B  5 35REFFLD(ITEMMSTR/PPRODID CTS 
+     A                                      TEMMST)                     
+     A                                      CHECK(LC)                   
+     A                                 21  9'F3=EXIT'                 
+     A                                      COLOR(BLU)                
+     A                                 21 23'F4=SAVE'                 
+     A                                      COLOR(BLU)                
+     A            ERRMSG        50A  O 18 10                          
+     A  50                                  COLOR(RED)                
+     A  51                                  COLOR(WHT)                
+     A                                 21 36'F5 = PROMPT'             
+     A                                      COLOR(BLU)                
+     A                                  1 66'DATE:'                   
+     A                                      DSPATR(HI)                
+     A                                  2 66'TIME:'                   
+     A                                      DSPATR(HI)                
+     A                                  1  2'PGM:'                    
+     A                                      DSPATR(HI)                
+     A                                  2  2'USER:'                   
+     A                                      DSPATR(HI)                
+     A          R PURCHSFL                  SFL                         
+     A*%%TS  SD  20260527  154822  CTSC67      REL-V7R4M0  5770-WDS     
+     A            PPRODNAME R        O  9 23REFFLD(ITEMMSTR/PPRODNAME C 
+     A                                      /ITEMMST)                   
+     A            PQTY      R        O  9 60REFFLD(ITEMMSTR/PQTY CTSC67 
+     A                                      MST)                        
+     A                                      EDTCDE(Z)                   
+     A            PPRODID   R        O  9  8REFFLD(ITEMMSTR/PPRODID CTS 
+     A                                      TEMMST)                     
+     A            REQQTY         5S 0B  9 48                            
+     A            PPRODRATE      7S 2H                                  
+     A          R PURCHCTL                  SFLCTL(PURCHSFL)            
+     A*%%TS  SD  20260602  190543  CTSC67      REL-V7R4M0  5770-WDS     
+     A                                      SFLSIZ(0050)                
+     A                                      SFLPAG(0008)                
+     A                                      CA03(03 'F3=EXIT')          
+     A                                      CF04(04 'F4=SAVE')          
+     A                                      OVERLAY                  
+     A  31                                  SFLDSP                   
+     A  32                                  SFLDSPCTL                
+     A  33                                  SFLCLR                   
+     A  34                                  SFLEND(*MORE)            
+     A            PGMNAM        10A  O  1  8COLOR(BLU)               
+     A                                      DSPATR(HI)               
+     A            DSPUSER       10A  O  2  8COLOR(BLU)               
+     A                                  8  6'Product Id'             
+     A                                      DSPATR(HI)               
+     A                                  8 24'Product Name'           
+     A                                      DSPATR(HI)               
+     A                                  8 59'Quantity'               
+     A                                      DSPATR(HI)               
+     A                                  1 33'Purchase Details'       
+     A                                      DSPATR(HI)               
+     A                                  1 72DATE                     
+     A                                      EDTCDE(Y)                   
+     A                                      COLOR(BLU)                  
+     A                                  2 72TIME                        
+     A                                      COLOR(BLU)                  
+     A                                  4  9'Customer Name....:'        
+     A                                      DSPATR(HI)                  
+     A                                  5  9'Customer Phone...:'        
+     A                                      DSPATR(HI)                  
+     A            CUSTNAME  R        B  4 28REFFLD(BILLMSTR/BCUSTNAME C 
+     A                                      /BILLMST)                   
+     A                                      CHECK(LC)                   
+     A  91                                  DSPATR(RI)                  
+     A  91                                  DSPATR(PC)                  
+     A            PHONE     R        B  5 28REFFLD(BILLMSTR/BCUSTPHN CT 
+     A                                      BILLMST)                    
+     A  92                                  DSPATR(RI)                  
+     A  92                                  DSPATR(PC)                  
+     A                                  8 47'Quantity'                  
+     A                                      DSPATR(HI)                  
+     A                                  7 59'Available'                 
+     A                                      DSPATR(HI)                  
+     A                                  7 47'Required'                  
+     A                                      DSPATR(HI)                  
+     A                                  1 66'DATE:'                     
+     A                                      DSPATR(HI)                  
+     A                                  2 66'TIME:'                     
+     A                                      DSPATR(HI)                  
+     A                                  1  2'PGM:'                      
+     A                                      DSPATR(HI)                  
+     A                                  2  2'USER:'                     
+     A                                      DSPATR(HI)                  
+     A          R PURCHFTR                                              
+     A*%%TS  SD  20260526  152802  CTSC67      REL-V7R4M0  5770-WDS     
+     A                                      CA03(03 'F3=EXIT')          
+     A                                      CF04(04 'F4=SAVE')          
+     A                                      OVERLAY                     
+     A                                 21  5'F3=EXIT'                   
+     A                                      COLOR(BLU)                  
+     A                                 21 18'F4=SAVE'                   
+     A                                      COLOR(BLU)                  
+     A            ERRMSG        50   O 19  6                            
+     A  50                                  COLOR(RED)                  
+     A  51                                  COLOR(WHT)                  
+     A          R RCPTSFL                   SFL                         
+     A*%%TS  SD  20260527  154822  CTSC67      REL-V7R4M0  5770-WDS     
+     A            R_PRDNAM  R        O  9  7REFFLD(ITEMMSTR/PPRODNAME C 
+     A                                      /ITEMMST)                   
+     A            R_RATE    R        O  9 49REFFLD(ITEMMSTR/PPRODRATE C 
+     A                                      /ITEMMST)                   
+     A                                      EDTCDE(J)                   
+     A            R_AMOUNT       9Y 2O  9 63EDTCDE(J)                   
+     A            R_REQQTY       5Y 0O  9 33EDTCDE(Z)                   
+     A            R_PRDID        5A  H                                  
+     A          R RCPTCTL                   SFLCTL(RCPTSFL)             
+     A*%%TS  SD  20260602  120940  CTSC67      REL-V7R4M0  5770-WDS     
+     A                                      SFLSIZ(0050)                
+     A                                      SFLPAG(0008)                
+     A                                      CA03(03 'F3=EXIT')          
+     A                                      CF04(04 'F4=CONFIRM TRANSAC 
+     A                                      OVERLAY                     
+     A  41                                  SFLDSP                      
+     A  42                                  SFLDSPCTL                   
+     A  43                                  SFLCLR                      
+     A  44                                  SFLEND(*MORE)               
+     A            PGMNAM        10A  O  1  8COLOR(BLU)                  
+     A                                      DSPATR(HI)                  
+     A            DSPUSER       10A  O  2  8COLOR(BLU)                  
+     A                                  8  7'Product Name'              
+     A                                      DSPATR(HI)                 
+     A                                  8 32'Quantity'                 
+     A                                      DSPATR(HI)                 
+     A                                  8 50'Rate'                     
+     A                                      DSPATR(HI)                 
+     A                                  8 65'Amount'                   
+     A                                      DSPATR(HI)                 
+     A                                  1 35'Bill Receipt'             
+     A                                      DSPATR(HI)                 
+     A                                  1 72DATE                       
+     A                                      EDTCDE(Y)                  
+     A                                      COLOR(BLU)                 
+     A                                  2 72TIME                       
+     A                                      COLOR(BLU)                 
+     A                                  4  7'Customer Name.....:'      
+     A                                      DSPATR(HI)                 
+     A                                  5  7'Customer Phone....:'      
+     A                                      DSPATR(HI)                  
+     A            CUSTNAME  R        O  4 27REFFLD(BILLMSTR/BCUSTNAME C 
+     A                                      /BILLMST)                   
+     A            PHONE     R        O  5 27REFFLD(BILLMSTR/BCUSTPHN CT 
+     A                                      BILLMST)                    
+     A                                  1 66'DATE:'                     
+     A                                      DSPATR(HI)                  
+     A                                  2 66'TIME:'                     
+     A                                      DSPATR(HI)                  
+     A                                  1  2'PGM:'                      
+     A                                      DSPATR(HI)                  
+     A                                  2  2'USER:'                     
+     A                                      DSPATR(HI)                  
+     A          R RCPTFTR                                               
+     A*%%TS  SD  20260529  044549  CTSC67      REL-V7R4M0  5770-WDS     
+     A                                      CA03(03 'F3=EXIT')          
+     A                                      CF04(04 'F4=SAVE')          
+    A                                      OVERLAY                    
+    A                                 20  5'Total Items:'             
+    A                                      DSPATR(HI)                 
+    A                                 20 52'Total Amount:'            
+    A                                      DSPATR(HI)                 
+    A                                 22  6'F3=EXIT'                  
+    A                                      COLOR(BLU)                 
+    A                                 22 20'F4=SAVE'                  
+    A                                      COLOR(BLU)                 
+    A            ERRMSG        50A  O 18  6                           
+    A  50                                  COLOR(RED)                 
+    A  51                                  COLOR(WHT)                 
+    A            R_TOTQTY       9Y 0O 20 18EDTCDE(Z)                  
+    A            R_TOTAMT      11Y 2O 20 66EDTCDE(J)                  
+    A          R CONFIRMWDO                                           
+    A*%%TS  SD  20260529  045225  CTSC67      REL-V7R4M0  5770-WDS    
+    A                                      WINDOW(10 25 7 35)         
+     A                                      WDWBORDER((*COLOR YLW))    
+     A                                  2  4'ARE YOU SURE YOU WANT TO' 
+     A                                      COLOR(BLU)                 
+     A                                  3  4'PROCEED? (Y/N) . . :'     
+     A                                      COLOR(BLU)                 
+     A            CONFIRM        1A  B  3 25                           
+     A          R PRMPTSFL                  SFL                        
+     A            W1OPT          1A  B  6  2                           
+     A            W1PRODID       5A  O  6  6                           
+     A            W1MFGNAM      20A  O  6 13                           
+     A          R PRMPTCTL                  SFLCTL(PRMPTSFL)           
+     A*%%TS  SD  20260603  073153  CTSC67      REL-V7R4M0  5770-WDS    
+     A                                      CA12(12 'CANCEL')          
+     A                                      OVERLAY                    
+     A                                      SFLDSP                     
+     A                                      SFLDSPCTL                  
+     A  71                                  SFLCLR                     
+     A  73                                  SFLEND(*MORE)               
+     A                                      SFLSIZ(0010)                
+     A                                      SFLPAG(0005)                
+     A                                      WINDOW(5 15 12 55)          
+     A                                      WDWBORDER((*COLOR BLU) (*DS 
+     A                                  2 20'SELECT PRODUCT'            
+     A                                      COLOR(WHT)                  
+     A                                      DSPATR(HI)                  
+     A                                  3  2'ENTER Y TO SELECT'         
+     A                                      COLOR(TRQ)                  
+     A                                  4  2'F12=CANCEL'                
+     A                                      COLOR(BLU)                  
+     A                                  5  2'OPT ID     MANUFACTURER'   
+     A                                      COLOR(YLW)                  
+     A          R CATSFL                    SFL                         
+     A            W2OPT          1A  B  6  2                            
+     A            W2CAT         10A  O  6  6                            
+     A          R CATCTL                    SFLCTL(CATSFL)              
+     A*%%TS  SD  20260603  072035  CTSC67      REL-V7R4M0  5770-WDS     
+     A                                      CA12(12 'CANCEL')           
+     A                                      OVERLAY                     
+     A                                      SFLDSP                      
+     A                                      SFLDSPCTL                   
+     A  72                                  SFLCLR                      
+     A  74                                  SFLEND(*MORE)               
+     A                                      SFLSIZ(0010)                
+     A                                      SFLPAG(0005)                
+     A                                      WINDOW(5 30 12 30)          
+     A                                      WDWBORDER((*COLOR GRN) (*DS 
+     A                                  2  5'SELECT CATEGORY'           
+     A                                      COLOR(WHT)                  
+     A                                      DSPATR(HI)                  
+     A                                  3  2'ENTER Y TO SELECT'         
+     A                                      COLOR(TRQ)                  
+     A                                  4  2'F12=CANCEL'              
+     A                                      COLOR(BLU)                
+     A                                  5  2'OPT  CATEGORY NAME'      
+     A                                      COLOR(YLW)                
+
