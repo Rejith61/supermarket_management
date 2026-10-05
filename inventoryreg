@@ -1,0 +1,86 @@
+FSMMSDSPF  CF   E             WORKSTN                   
+                                                        
+D PgmSDS         SDS                                    
+D PGMNAM                  1     10A                     
+                                                        
+DCHKCOUNT         S              1  0                   
+DIsValid          S              1N   INZ(*ON)          
+D w_MaxID         S              5A   INZ(*BLANKS)      
+D w_NumID         S              5P 0 INZ(0)            
+D p_EmpID         S             10A                     
+                                                        
+C     *ENTRY        PLIST                               
+C                   PARM                    p_EmpID     
+                                                        
+    exec sql SET OPTION COMMIT = *NONE;                 
+                                                        
+    exsr GetNextID;  //ID autoincrement subroutine           
+                                                             
+    dow *in03 = *off;                                        
+                                                             
+      DSPUSER = p_EmpID;                                     
+                                                             
+        exfmt INVREG;                                        
+        ERRMSG = ' ';                                        
+        *in50 = *off;                                        
+        *in51 = *off;                                        
+        *in61 = *off;                                        
+        *in62 = *off;                                        
+        *in63 = *off;                                        
+                                                             
+        select;                                              
+            when *in03 = *on;                                
+                leave;                                       
+                                                                
+      when *in04 = *on;                                         
+                                                                
+               IsValid = *on;                                   
+                                                                
+               if MIREGNO = *blanks;                            
+                   *in63 = *on;                                 
+                    IsValid = *off;                             
+               endif;                                           
+               if MIMFGNAME = *blanks;                          
+                   *in62 = *on;                                 
+                    IsValid = *off;                             
+               endif;                                           
+                                                                
+          if not IsValid;                                       
+             ERRMSG = 'Please fill in all mandatory fields.';   
+                                                                
+                     *in50 = *on;                                  
+                     *in04 = *off;                                 
+                                                                   
+            //Checking duplicate entry                             
+            else;                                                  
+                exec sql                                           
+                   SELECT COUNT(*) INTO :CHKCOUNT FROM INVMST      
+                                WHERE IPRODID = :MIPRODID;         
+                                                                   
+           //Inserting into INVMST table                           
+            if CHKCOUNT = 0;                                       
+                exec sql                                           
+                   INSERT INTO INVMST (IPRODID,IMFGNAME, IREGNO)   
+                        VALUES (:MIPRODID, :MIMFGNAME, :MIREGNO);  
+                exsr GetNextID;                                    
+                MIMFGNAME = ' ';                                   
+                MIREGNO   = ' ';                                   
+       endsl;                                                          
+                                                                       
+           enddo;                                                      
+       *inlr = *on;                                                    
+                                                                       
+     begsr GetNextID;                                                  
+       // Retrieving Max ID from INVMST (if no data default to 00000)  
+                exec sql SELECT COALESCE(MAX(IPRODID), '00000')        
+                           INTO :w_MaxID                               
+                           FROM INVMST;                                
+                                                                       
+                // Convert String to Numeric and Increment             
+                w_NumID = %dec(w_MaxID: 5: 0) + 1;                     
+                                                                       
+          // Convert back to String and Pad with Zeros (Edit Code 'X') 
+                                                                       
+                MIPRODID = %editc(w_NumID: 'X');                       
+            endsr;                   
+                                     
