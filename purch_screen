@@ -1,0 +1,231 @@
+FSMMSDSPF  CF   E             WORKSTN                        
+F                                     SFILE(PURCHSFL:RRN1)   
+F                                     SFILE(RCPTSFL:RRN2)    
+                                                             
+D PgmSDS         SDS                                         
+D PGMNAM                  1     10A                          
+                                                             
+DRRN1             S              4  0                        
+DRRN2             S              4  0                        
+DIdx              S              4  0 inz(0)                 
+DTotalQty         S              3P 0 inz(0)                 
+DTotalAmt         S             11P 2 inz(0)                 
+Di                S              4P 0 inz(0)                 
+D p_EmpID         S             10A                          
+                                                             
+C     *ENTRY        PLIST                                    
+C                   PARM                    p_EmpID          
+                                                              
+     exec sql                                                 
+         SET OPTION COMMIT = *NONE;                           
+                                                              
+     exsr LoadPurchSfl;     //Load the purchase Screen        
+                                                              
+     dow *in03 = *off;                                        
+                                                              
+      DSPUSER = p_EmpID;                                      
+                                                              
+         write PURCHFTR;                                      
+         exfmt PURCHCTL;                                      
+                                                              
+         ERRMSG = ' ';                                        
+         *in50 = *off;                                        
+         *in51 = *off;                                        
+        *in91 = *off;                                         
+        *in92 = *off;                                         
+                                                              
+        select;                                               
+            when *in03 = *on;                                 
+                leave;                                        
+                                                              
+            when *in04 = *on;                                 
+                if CUSTNAME = ' ' or PHONE = ' ';             
+                      if CUSTNAME = *blanks;                  
+                          *in91 = *on;                        
+                      endif;                                  
+                if PHONE = *blanks;                           
+                          *in92 = *on;                        
+                endif;                                        
+                                                              
+             *in50 = *on;                                     
+            ERRMSG = 'Error: Customer Name and Phone are required.';    
+                 iter;                                                  
+             endif;                                                     
+                                                                        
+           exsr BuildReceipt;        //Go to receipt screen             
+                                                                        
+             //if any product is selected                               
+             if RRN2 > 0;                                               
+                                                                        
+                    dow *in03 = *off;                                   
+                                                                        
+                        write RCPTFTR;                                  
+                        exfmt RCPTCTL;                                  
+                                                                        
+                        select;                                         
+                            when *in03 = *on;                           
+                            *in03 = *off;                               
+                            leave;                                
+                                                                  
+             //Save the purchase                                  
+                            when *in04 = *on;                     
+                              exsr FinalizeAndSaveToDb;           
+                                                                  
+              //Reload updated purchase screen                    
+                            CUSTNAME = ' ';                       
+                            PHONE    = ' ';                       
+                            exsr LoadPurchSfl;                    
+                                                                  
+                            *in50 = *off;                         
+                            *in51 = *on;                          
+            ERRMSG = 'Transaction Completed & Stock Updated!';    
+                                                                  
+                            *in03 = *on;                          
+                                leave;                            
+                        endsl;                                          
+                    enddo;                                              
+           else;                                                        
+                    *in50 = *on;                                        
+            ERRMSG = 'Error: Select a valid quantity to purchase.';     
+                                                                        
+           endif;                                                       
+                                                                        
+                *in04 = *off;                                           
+                                                                        
+            other;                                                      
+        endsl;                                                          
+                                                                        
+    enddo;                                                              
+                                                                        
+    *inlr = *on;                                                        
+                                                                        
+    //=======Subroutine to load Purchase Screen ======================= 
+                                                                        
+    begsr LoadPurchSfl;                                                 
+                                                                        
+        *in33 = *on;         //sflclr                                   
+        write PURCHCTL;                                                 
+        *in33 = *off;                                                   
+        *in31 = *off;       //sfldsp                                    
+        *in32 = *off;      //sfldspctl                                  
+        RRN1 = 0;                                                       
+                                                                        
+    //declaring cursor to fetch purchase details from ITEMMST           
+        exec sql DECLARE C1 CURSOR FOR                                  
+                 SELECT PPRODID, PPRODNAME, PQTY, PPRODRATE             
+                 FROM ITEMMST                                           
+                 WHERE PQTY > 0;                                        
+                                                                        
+        *in34 = *off;     //sflend                                      
+                                                                        
+        exec sql OPEN C1;                                               
+                                                                        
+        dow 1 = 1;                                                      
+            exec sql FETCH C1 INTO :PPRODID, :PPRODNAME, :PQTY,         
+                                                      :PPRODRATE;       
+                                                                        
+            if sqlcode <> 0;                                            
+                *in34 = *on;                                            
+                leave;                                                  
+            endif;                                                      
+                                                                        
+            REQQTY = 0;                                                 
+            RRN1 += 1;                                                  
+            write PURCHSFL;                                             
+        enddo;                                                         
+                                                                       
+        exec sql CLOSE C1;                                             
+                                                                       
+        if RRN1 > 0;                                                   
+            *in31 = *on;                                               
+            *in32 = *on;                                               
+        endif;                                                         
+                                                                       
+    endsr;                                                             
+                                                                       
+    //===========Subroutine to load Receipt==========================  
+                                                                       
+    begsr BuildReceipt;                                                
+                                                                       
+        *in43 = *on;         //sflclr                                  
+        write RCPTCTL;                                                 
+        *in43 = *off;                                                   
+        *in41 = *off;       //sfldsp                                    
+        *in42 = *off;      //sfldspctl                                  
+        RRN2 = 0;                                                       
+        TotalQty = 0;                                                   
+        TotalAmt = 0;                                                   
+                                                                        
+        *in44 = *off;     //sflend                                      
+                                                                        
+        for i = 1 to 50;                                                
+           chain i purchsfl;                                            
+           if %found();                                                 
+             if REQQTY > 0 and REQQTY <= PQTY;                          
+                                                                        
+        //get details from purchase screen into receipt                 
+                R_PRDID  = PPRODID;                                     
+                R_PRDNAM = PPRODNAME;                                   
+                R_RATE   = PPRODRATE;                            
+                R_REQQTY = REQQTY;                               
+                R_AMOUNT = PPRODRATE * REQQTY;                   
+                                                                 
+                TotalQty += REQQTY;                              
+                TotalAmt += R_AMOUNT;                            
+                                                                 
+                RRN2 += 1;                                       
+                write RCPTSFL;                                   
+                                                                 
+             endif;                                              
+          endif;                                                 
+        endfor;                                                  
+                                                                 
+        *in44 = *on;                                             
+                                                                 
+        R_TOTQTY = TotalQty;                                     
+        R_TOTAMT = TotalAmt;                                         
+                                                                     
+        if RRN2 > 0;                                                 
+            *in41 = *on;                                             
+            *in42 = *on;                                             
+        endif;                                                       
+                                                                     
+    endsr;                                                           
+                                                                     
+                                                                     
+    //=========Subroutine to update Database=====================    
+                                                                     
+    begsr FinalizeAndSaveToDb;                                       
+                                                                     
+        for Idx = 1 to 50;                                           
+            chain Idx RCPTSFL;                                       
+            if %found;                                                  
+                                                                        
+        //validating product rate from ITEMMST table                    
+                exec sql                                                
+                    SELECT PPRODRATE INTO :PPRODRATE                    
+                    FROM ITEMMST                                        
+                    WHERE PPRODID = :R_PRDID;                           
+                                                                        
+                   if sqlcode  = 0;                                     
+                                                                        
+        //updating billpf table                                         
+                 exec sql                                               
+                         INSERT INTO BILLPF (B_CUSTNAME, B_PHONE,       
+                                   B_PRODID, B_QTY, B_RATE, B_AMOUNT)   
+                         VALUES (:CUSTNAME, :PHONE, :R_PRDID,           
+                      :R_REQQTY, :PPRODRATE, (:R_REQQTY * :PPRODRATE)); 
+      //update quantity in ITEMMST after purchase        
+               exec sql                                  
+                   UPDATE ITEMMST                        
+                   SET PQTY = PQTY - :R_REQQTY           
+                   WHERE PPRODID = :R_PRDID              
+                   AND PQTY >= :R_REQQTY;                
+                                                         
+               endif;                                    
+                                                         
+           endif;                                        
+                                                         
+       endfor;                                           
+                                                         
+   endsr;                     
