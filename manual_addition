@@ -1,0 +1,286 @@
+FSMMSDSPF  CF   E             WORKSTN                        
+F                                     SFILE(PRMPTSFL:RRN3)   
+                                                             
+D PgmSDS         SDS                                         
+D PGMNAM                  1     10A                          
+                                                             
+DRRN3             S              4  0                        
+                                                             
+D w_W1PRODID      S              5A   INZ(*BLANKS)           
+D w_W1MFGNAM      S             20A   INZ(*BLANKS)           
+D w_Mode          S              1A   INZ(*BLANKS)           
+D w_PrevID        S              5A   INZ(*BLANKS)           
+D w_CheckID       S              5A   INZ(*BLANKS)           
+D IsValid         S              1N   INZ(*ON)               
+D p_EmpID         S             10A                          
+                                                             
+C     *ENTRY        PLIST                                      
+ C                   PARM                    p_EmpID            
+                                                                
+        exec sql SET OPTION COMMIT = *NONE;                     
+                                                                
+        *in40 = *off;   // Protect Name                         
+        *in45 = *off;   // Protect Brand & Cat                  
+        *in50 = *off;                                           
+        *in51 = *off;                                           
+                                                                
+        dow *in03 = *off;                                       
+                                                                
+           DSPUSER = p_EmpID;                                   
+                                                                
+            exfmt ITEMMAN;                                      
+                                                                
+            *in50 = *off;                                       
+           *in51 = *off;                                       
+           *in61 = *off;   //Name check                        
+           *in62 = *off;   //Brand check                       
+           *in63 = *off;   //Category check                    
+           *in64 = *off;   //Rate check                        
+           *in65 = *off;   //Quantity check                    
+           *in82 = *off;   //Date check                        
+           ERRMSG = ' ';                                       
+                                                               
+           select;                                             
+                                                               
+           when *in03 = *on;                                   
+               leave;                                          
+                                                               
+           when *in04 = *on;                                   
+                                                               
+               IsValid = *on;                                  
+                                                                    
+         if PMFGDATE > %date();                                     
+             *in82 = *on;                                           
+             IsValid = *off;                                        
+             *in50 = *on;                                           
+     ERRMSG = 'Error: Manufacturing date cannot be in the future!'; 
+         endif;                                                     
+                                                                    
+         if PQTY <= 0;                                              
+                *in65 = *on;                                        
+                 IsValid = *off;                                    
+         endif;                                                     
+         if PPRODRATE <= 0;                                         
+                 *in64 = *on;                                       
+                  IsValid = *off;                                   
+         endif;                                                     
+                  if PCATTYPE = *blanks;                             
+                     *in63 = *on;                                    
+                     IsValid = *off;                                 
+                  endif;                                             
+                                                                     
+                  if PBRAND = *blanks;                               
+                      *in62 = *on;                                   
+                       IsValid = *off;                               
+                  endif;                                             
+                                                                     
+                   if PPRODNAME = *blanks;                           
+                      *in61 = *on;                                   
+                       IsValid = *off;                               
+                   endif;                                            
+                                                                     
+              if PPRODID <> w_PrevID;                                
+        ERRMSG = 'ID changed! Press Enter to load before saving.';   
+               *in50 = *on;                                            
+               IsValid = *off;                                         
+               endif;                                                  
+                                                                       
+           if not IsValid;                                             
+                    if ERRMSG = *blanks;                               
+                       ERRMSG = 'Please correct highlighted fields.';  
+                       *in50 = *on;                                    
+                    endif;                                             
+                    *in04 = *off;                                      
+                                                                       
+           else;                                                       
+               // UPDATE EXISTING CART ITEM                            
+               if w_Mode = 'U';                                        
+                   exec sql                                            
+                       UPDATE ITEMMST                                  
+                       SET PPRODRATE = :PPRODRATE,                     
+                           PMFGDATE  = :PMFGDATE,                       
+                           PQTY      = PQTY + :PQTY                     
+                       WHERE PPRODID = :PPRODID;                        
+                                                                        
+                   ERRMSG = 'Product updated in stock successfully!';   
+                   *in51 = *on;                                         
+                                                                        
+               // INSERT NEW CART ITEM                                  
+               elseif w_Mode = 'I';                                     
+                   exec sql                                             
+                       INSERT INTO ITEMMST (PPRODID, PPRODNAME, PBRAND, 
+                                   PCATTYPE, PPRODRATE,PMFGDATE, PQTY)  
+                       VALUES (:PPRODID, :PPRODNAME, :PBRAND,:PCATTYPE, 
+                                      :PPRODRATE, :PMFGDATE, :PQTY)   ; 
+                   ERRMSG = 'Product added to stock successfully!';     
+                   *in51 = *on;                                         
+                                                                        
+               else;                                                    
+                   ERRMSG = 'Please press Enter to load a product first 
+                                                                        
+                   *in50 = *on;                                         
+               endif;                                                   
+                                                                        
+               if (w_Mode = 'U' or w_Mode = 'I') and *in50 = *off;      
+                   clear PPRODID;                                       
+                   clear PPRODNAME;                                     
+                   clear PBRAND;                                        
+                   clear PCATTYPE;                                      
+                   clear PPRODRATE;                                     
+                   clear PMFGDATE;                                      
+                   clear PQTY;                                          
+                   w_Mode = *blanks;                                    
+                   w_PrevID = *blanks;                                  
+                   *in40 = *off;                                        
+                   *in45 = *off;                                        
+               endif;                                                   
+           endif;                                                       
+               *in04 = *off;                                            
+                                                                        
+           //Enter Key Pressed (Load Data)                              
+                                                                        
+          when *in05 = *on;                                             
+                                                                        
+                // 1. Clear the Window Subfile                          
+                       *in71 = *on;                                     
+                       write PRMPTCTL;                                  
+                       *in71 = *off;                                    
+                       RRN3 = 0;                                        
+                                                                        
+          // 2. Fetch all products from INVMST to populate window       
+               exec sql DECLARE C_PRMPT CURSOR FOR                      
+                       SELECT IPRODID, IMFGNAME FROM INVMST;            
+               exec sql OPEN C_PRMPT;                                   
+                                                                        
+           dow 1=1;                                                     
+              exec sql FETCH C_PRMPT INTO :w_W1PRODID, :w_W1MFGNAM;     
+                   if sqlcode <> 0;                                     
+                        leave;                                          
+                        endif;                                          
+                                                                        
+                        W1OPT = *blanks;                                
+                        W1PRODID = w_W1PRODID;                          
+                        W1MFGNAM = w_W1MFGNAM;                          
+                        RRN3 += 1;                                      
+                        write PRMPTSFL;                                 
+                    enddo;                                              
+                    exec sql CLOSE C_PRMPT;                             
+      // 3. Display Window and Handle Selection                        
+               if RRN3 > 0;                                            
+                   *in73 = *on;                                        
+                   exfmt PRMPTCTL;                                     
+                                                                       
+                   readc PRMPTSFL;                                     
+                   if not %eof and W1OPT = 'Y';                        
+                                                                       
+                       // User selected an item, map to main screen    
+                       PPRODID = W1PRODID;                             
+                                                                       
+              // Check if it already exists in ITEMMST                 
+                         exec sql SELECT PPRODNAME, PBRAND, PCATTYPE   
+                                  INTO :PPRODNAME, :PBRAND, :PCATTYPE  
+                                  FROM ITEMMST                         
+                                  WHERE PPRODID = :PPRODID;            
+                          if sqlcode = 0;                               
+                              // Exists in ITEMMST - Prepare for UPDATE 
+                                                                        
+                                w_Mode = 'U';                           
+                                *in40 = *on;   // Protect Name          
+                                *in45 = *on;   // Protect Brand & Cat   
+                                *in51 = *on;                            
+                ERRMSG = 'Enter details and submit (Press F4).';        
+                                                                        
+                                w_PrevID = PPRODID;                     
+               else;                                                    
+             // NOT in ITEMMST but in INVMST - Prepare for INSERT       
+                             w_Mode = 'I';                              
+                             *in40 = *off;  // Keep input capable for   
+                             *in45 = *off;                              
+                             *in51 = *on;                               
+         ERRMSG = 'Product registered, enter other details and save';   
+                            w_PrevID = PPRODID;              
+                                                             
+               // Clear the fields so user can input new data
+                                                             
+                            clear PPRODNAME;                 
+                            clear PBRAND;                    
+                            clear PCATTYPE;                  
+                            clear PPRODRATE;                 
+                            clear PQTY;                      
+                        endif;                               
+               endif;                                        
+         endif;                                              
+                                                             
+         *in05 = *off; // Reset prompt key                   
+                                                             
+           other;                                            
+             if PPRODID <> *blanks and PPRODID <> w_PrevID;           
+                                                                      
+           //checking product ID in itemmst table                     
+                 exec sql                                             
+                     SELECT PPRODNAME, PBRAND, PCATTYPE               
+                     INTO :PPRODNAME, :PBRAND, :PCATTYPE              
+                     FROM ITEMMST                                     
+                     WHERE PPRODID = :PPRODID;                        
+                                                                      
+          //if present in ITEMMST (UPDATE)                            
+                 if sqlcode = 0;                                      
+                     w_Mode = 'U';     // Update Mode                 
+                     *in40  = *on;     // Lock Name                   
+                     *in45  = *on;     // Lock Brand & Category       
+                     ERRMSG = 'Enter details and submit (Press F4).'; 
+                     *in51  = *on;                                    
+                     w_PrevID = PPRODID;                              
+                      clear PPRODRATE;                              
+                      clear PQTY;                                   
+                                                                    
+         //if product ID not present in itemmst table               
+                                                                    
+                  else;                                             
+         //checking product ID in INVMST table                      
+                      exec sql                                      
+                          SELECT IPRODID                            
+                          INTO :w_CheckID                           
+                          FROM INVMST                               
+                          WHERE IPRODID = :PPRODID;                 
+                                                                    
+        //if ID present in INVMST (INSERT)                          
+                      if sqlcode = 0;                               
+                          w_Mode = 'I';     // Insert Mode          
+                          *in40  = *off;                            
+                           *in45  = *off;                            
+                                                                     
+                           clear PPRODNAME;                          
+                           clear PBRAND;                             
+                           clear PCATTYPE;                           
+                           clear PPRODRATE;                          
+                           clear PQTY;                               
+                           clear PMFGDATE;                           
+                                                                     
+       ERRMSG = 'Product registered, fill other details & submit.';  
+                           *in51  = *on;                             
+                           w_PrevID = PPRODID;                       
+                                                                     
+        //Not Registered                                             
+                       else;                                         
+                           w_Mode = 'E';     // Error Mode           
+                           *in40  = *off;                            
+                           *in45  = *off;                             
+                           clear PPRODNAME;                           
+                           clear PBRAND;                              
+                           clear PCATTYPE;                            
+                           clear PPRODRATE;                           
+                           clear PQTY;                                
+                           clear PMFGDATE;                            
+                                                                      
+          ERRMSG = 'Error: Product ID Not Registered!';               
+                                                                      
+                           *in50  = *on;                              
+                           w_PrevID = *blanks;                        
+                       endif;                                         
+                   endif;                                             
+               endif;                                                 
+           endsl;                                                     
+       enddo;                                                         
+                                                   
+       *inlr = *on;                                
